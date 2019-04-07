@@ -1,0 +1,32 @@
+#main-form { margin: auto; background-color: #202429; color: white; }
+#results-div { margin: auto; }
+a, a:hover { color: black; cursor: pointer; }
+i { vertical-align: middle; }
+#product-images img { padding: 7px; outline: 5px solid black; outline-offset: -7px;
+}
+.modal-body { padding: 0; }
+#carouselSlides img { padding: 7px; outline: 8px solid black; outline-offset: -8px; }
+#prevImg { background-color: #202429; color: white; }
+#nextImg { background-color: #202429; color: white; }
+#similar-items-body div { margin: 5px 0 5px 0; background-color: #202429; padding: 10px; }
+#similar-items-body div img { width: 100px; height: 100px; object-fit: cover; }
+.active a { color: white; background-color: black; }
+.active { color: white; }
+.pagination * { color: black; }
+.selecteditem { background-color: lightgray; }
+/*
+a:hover { color: black; }
+.nav-tabs.active a:hover { color: white; }
+.pagination * { border: 0px; color: black; }
+.page-item.active .page-link { background-color: black; }
+.nav-pills * { color: black; }
+.nav-item .nav-link.active { background-color: black; color: white; }
+#product-images div img { padding: 7px; outline: 5px solid black; outline-offset: -7px; }
+a:hover { color: white; }
+#results-div { width: 1200px; margin: auto; display: none; }
+#wish-list-div { width: 1200px; margin: auto; }
+#item-div { display: none; }
+#product-photos, #shipping-info, #seller-info, #similar-items { display: none; }
+#similar-items-body { font-size: 14px; }
+.active { color: white; }
+#wish-list-content img { width: 100px; height: 100px; object-fit: cover; }*/
