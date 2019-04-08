@@ -80,6 +80,8 @@ function getItemJSON(req, res)
     request({url: API_URL, json: true}, 
     function(error, response, body)
     {
+        if (body == undefined) { res.send(error); return; }
+        
         res.send(body.Item);
     });
 }
@@ -96,6 +98,9 @@ function getGoogleImages(req, res)
     request({url: API_URL, json: true},
     function(error, response, body)
     {
+        console.log(error);
+        if (body == undefined) { res.send(error); return; }
+        
         res.send(body.items);
     });
 }
@@ -114,6 +119,8 @@ function getSimilarItemsJSON(req, res)
     request({url: API_URL, json: false},
     function(error, response, body)
     {
+        if (body == undefined) { res.send(error); return; }
+        
         res.send(body);
     });
 }

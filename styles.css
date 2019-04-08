@@ -6,14 +6,17 @@ i { vertical-align: middle; }
 }
 .modal-body { padding: 0; }
 #carouselSlides img { padding: 7px; outline: 8px solid black; outline-offset: -8px; }
-#prevImg { background-color: #202429; color: white; }
-#nextImg { background-color: #202429; color: white; }
+#prevImg { background-color: #202429; color: white; position: absolute; left: 12px; top: 50%; }
+#nextImg { background-color: #202429; color: white; position: absolute; right: 12px; top: 50%;  }
 #similar-items-body div { margin: 5px 0 5px 0; background-color: #202429; padding: 10px; }
 #similar-items-body div img { width: 100px; height: 100px; object-fit: cover; }
 .active a { color: white; background-color: black; }
 .active { color: white; }
 .pagination * { color: black; }
-.selecteditem { background-color: lightgray; }
+.selecteditem { background-color: lightgray !important; }
+.page-item.active .page-link { background-color: black; }
+.badKwd { border: 1px solid red !important; }
+.badZip { border: 1px solid red !important; }
 /*
 a:hover { color: black; }
 .nav-tabs.active a:hover { color: white; }

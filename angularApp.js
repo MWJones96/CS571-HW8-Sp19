@@ -20,10 +20,12 @@ function HW8Controller($scope)
 
     $scope.pill = "results";
     
+    $scope.emptyKwd = false;
+    $scope.emptyZip = false;
+    
     $scope.searchModel = {
         page: "results",
         selectedItem: -1,
-        error: false,
         pageNum: 0,
         numberOfPages: 0,
         pageJSON: null,
@@ -39,18 +41,19 @@ function HW8Controller($scope)
     
     $scope.userZip = "";
     
-    //Checks for non-empty keyword and zip fields
-    $scope.emptyKwd = function () { return ($scope.kwd.search(/[^ ]+/) == -1); }
-    $scope.emptyZip = function () { return ($scope.zip.search(/[^ ]+/) == -1); }
-    
     //Checks for valid keyword and zip fields
     $scope.validKwd = function () { return ($scope.kwd.search(/[^ ]+/) != -1); }
     $scope.validZip = function () { return ($scope.zipMode && ($scope.userZip.search(/^[0-9]{5}$/) != -1)) || (!$scope.zipMode && ($scope.zip.search(/^[0-9]{5}$/) != -1)); }
     
     $scope.cutString = function(str)
     {
-        var cutStr = Number(ctr.substring(1, str.indexOf('D')));
-        return cutStr + ((cutStr == 1) ? ' day' : 'days');
+        var cutStr = Number(str.substring(1, str.indexOf('D')));
+        return cutStr + ((cutStr == 1) ? ' day' : ' days');
+    }
+    
+    $scope.checkEmptyKwd = function()
+    {
+        $scope.emptyKwd = ($scope.kwd.search(/[^ ]+/) == -1);
     }
     
     $scope.resetModel = function()
@@ -64,9 +67,17 @@ function HW8Controller($scope)
         $scope.searchModel.similarItemsShown = 5;
     }
     
-    $scope.getZipAutoComplete = function()
+    $scope.sortInput = function()
     {
-        if ($scope.zip.length == 0) { $scope.suggestedZipCodes = []; $scope.$apply(); return; }
+        alert("Needs sorting");
+    }
+    
+    $scope.getZipAutoComplete = function(searchText)
+    {
+        $scope.zip = searchText;
+        
+        if (searchText.search(/[^ ]+/) == -1) { $scope.suggestedZipCodes = []; $scope.emptyZip = true; return; }
+        else { $scope.emptyZip = false; }
         
         $.ajax({
             url: '/zipComplete',
@@ -74,23 +85,25 @@ function HW8Controller($scope)
             contentType: 'application/json',
             data:
             {
-                Zip: $scope.zip
+                Zip: searchText
             },
             success: function(json)
             {
-                var zips = [];
-                for (var i = 0; i < json.length; i++)
-                {
-                    zips.push(json[i].postalCode);
-                }
-
-                $scope.suggestedZipCodes = zips;
-                $scope.$apply();
             },
             error: function()
             {
-                alert("Error");
+                $scope.suggestedZipCodes = [];
             }
+        }).then(function(res) 
+        { 
+            for (var i = 0; i < res.length; i++) 
+            { 
+                $scope.suggestedZipCodes[i] = res[i].postalCode; 
+            }
+            
+            console.log($scope.suggestedZipCodes);
+            
+            $scope.$apply();
         });
     }
     
@@ -98,6 +111,7 @@ function HW8Controller($scope)
     {
         $scope.loading = true;
         $scope.pill = "results";
+        $scope.searched = false;
         
         $.ajax({
             url: '/json',
@@ -187,7 +201,8 @@ function HW8Controller($scope)
             },
             error: function()
             {
-                alert("Error");
+                $scope.loading = false;
+                alert("Item has expired. Please try another.");
             }
         });
     }
@@ -216,15 +231,12 @@ function HW8Controller($scope)
             },
             error: function()
             {
-                alert("Error getting photos");
             }
         });
     }
     
     $scope.loadSimilarItems = function(item)
     {
-        console.log('Item');
-        console.log(item);
         $.ajax({
             url: '/similarItems',
             type: 'GET',
@@ -247,7 +259,6 @@ function HW8Controller($scope)
             },
             error: function()
             {
-                alert("Error getting similar items");
             }
         });
     }
@@ -316,11 +327,58 @@ function HW8Controller($scope)
     
     $scope.clearForm = function()
     {
+        //Model variables for keyword and zip fields
+        $scope.kwd = "";
+        $scope.zip = "";
+        
+        //Clears the form entirely
+        document.getElementById('srch').disabled = true;
+        document.getElementById('category').selectedIndex = 0;
+
+        document.getElementById('new').checked = false; 
+        document.getElementById('used').checked = false; 
+        document.getElementById('unspec').checked = false;
+
+        document.getElementById('local').checked = false; 
+        document.getElementById('free').checked = false;
+
+        document.getElementById('miles').value = "";
+
+        document.getElementById('here').checked = true;
+        document.getElementById('zip').checked = false;
+
+        //user - User Location; other - Other Zip Code
+        $scope.zipMode = true;
+
+        //Whether data is currently being fetched
+        $scope.loading = false;
+
+        $scope.searched = false;
+
+        $scope.pill = "results";
+
+        $scope.emptyKwd = false;
+        $scope.emptyZip = false;
+        
+        $scope.searchModel = {
+            page: "results",
+            selectedItem: -1,
+            pageNum: 0,
+            numberOfPages: 0,
+            pageJSON: null,
+            itemJSON: null,
+            photosJSON: null,
+            similarItemsJSON: null,
+            itemTab: 0,
+            similarItemsShown: 5
+        }
+        
+        //Zip code autocomplete suggestions
+        $scope.suggestedZipCodes = [];
     }
     
     $(document).ready(function() 
     {
-        $scope.clearForm();
         //Fetches zip code of user's location
         var xml = new XMLHttpRequest();
         xml.open("GET", "http://ip-api.com/json", false);
