@@ -17,6 +17,17 @@ i { vertical-align: middle; }
 .page-item.active .page-link { background-color: black; }
 .badKwd { border: 1px solid red !important; }
 .badZip { border: 1px solid red !important; }
+.fadein.ng-enter { transition: 0.3s linear all; opacity: 0; }
+.fadein.ng-enter.ng-enter-active { opacity: 1; }
+
+.zoomout.ng-leave { transition: 0.5s linear all; transform: translateX(0); }
+.zoomout.ng-leave.ng-leave-active { transform: translateX(100%); }
+
+.zoomout.ng-enter { transition: 0.5s linear all; transform: translateX(-100%); }
+.zoomout.ng-enter.ng-enter-active { transform: translateX(0); }
+/*
+.zoomin .ng-enter { transition: 0.5s linear all; transform: translateX(100%); }
+.zoomin .ng-enter.ng-enter-active { transform: translateX(0); }
 /*
 a:hover { color: black; }
 .nav-tabs.active a:hover { color: white; }

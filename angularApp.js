@@ -1,7 +1,7 @@
 var app = angular.module('hw8', ['ngMaterial', 'angular-svg-round-progressbar']);
 app.controller('hw8Ctrl', HW8Controller);
 
-function HW8Controller($scope) 
+function HW8Controller($scope, $http) 
 {
     //Model variables for keyword and zip fields
     $scope.kwd = "";
@@ -23,9 +23,12 @@ function HW8Controller($scope)
     $scope.emptyKwd = false;
     $scope.emptyZip = false;
     
+    $scope.animations = true;
+    
     $scope.searchModel = {
         page: "results",
         selectedItem: -1,
+        selectedItemIDWishList: -1,
         pageNum: 0,
         numberOfPages: 0,
         pageJSON: null,
@@ -36,14 +39,19 @@ function HW8Controller($scope)
         similarItemsShown: 5
     }
     
-    //Zip code autocomplete suggestions
-    $scope.suggestedZipCodes = [];
-    
     $scope.userZip = "";
     
     //Checks for valid keyword and zip fields
     $scope.validKwd = function () { return ($scope.kwd.search(/[^ ]+/) != -1); }
     $scope.validZip = function () { return ($scope.zipMode && ($scope.userZip.search(/^[0-9]{5}$/) != -1)) || (!$scope.zipMode && ($scope.zip.search(/^[0-9]{5}$/) != -1)); }
+    
+    $scope.resetSelectedItem = function(key)
+    {
+        if (key == $scope.searchModel.selectedItemIDWishList)
+        {
+            $scope.searchModel.selectedItemIDWishList = -1;
+        }
+    }
     
     $scope.cutString = function(str)
     {
@@ -60,58 +68,77 @@ function HW8Controller($scope)
     {
         //The model variables for the search tab
         $scope.searchModel.page = "results";
-        $scope.searchModel.selectedItem = -1;
         $scope.searchModel.error = false;
         $scope.searchModel.pageNum = 0;
         $scope.searchModel.itemTab = 0;
         $scope.searchModel.similarItemsShown = 5;
     }
     
-    $scope.sortInput = function()
+    $scope.checkEmptyZip = function()
     {
-        alert("Needs sorting");
+        $scope.emptyZip = ($scope.zip.search(/[^ ]+/) == -1);
     }
     
-    $scope.getZipAutoComplete = function(searchText)
-    {
-        $scope.zip = searchText;
+
+    $scope.getZipAutoComplete = function()
+    { 
+        console.log("Search text: " + $scope.zip);
         
-        if (searchText.search(/[^ ]+/) == -1) { $scope.suggestedZipCodes = []; $scope.emptyZip = true; return; }
-        else { $scope.emptyZip = false; }
-        
-        $.ajax({
+        return $http({
+            method: 'GET',
             url: '/zipComplete',
-            type: 'GET',
-            contentType: 'application/json',
-            data:
+            headers:
             {
-                Zip: searchText
+                'Content-Type': 'application/json'
             },
-            success: function(json)
+            params:
             {
+                Zip: $scope.zip
             },
-            error: function()
-            {
-                $scope.suggestedZipCodes = [];
-            }
         }).then(function(res) 
         { 
-            for (var i = 0; i < res.length; i++) 
-            { 
-                $scope.suggestedZipCodes[i] = res[i].postalCode; 
+            console.log(res.data);
+            
+            var zips = [];
+            
+            for (var i = 0; i < res.data.length; i++)
+            {
+                zips.push(res.data[i].postalCode);
             }
             
-            console.log($scope.suggestedZipCodes);
-            
-            $scope.$apply();
+            return zips;
         });
+    }
+    
+    $scope.getSortedList = function()
+    {
+        var list = $scope.searchModel.similarItemsJSON.item.slice();
+        console.log(list);
+        
+        var sortFn = $("#ordering").val();
+        var ad = $("#ad").val();
+        
+        switch(sortFn)
+        {
+            case 'name': list.sort(function(a,b) { return (b.title).localeCompare(a.title); }); break;
+            case 'left': list.sort(function(a,b) { return Number(b.timeLeft.substring(1,b.timeLeft.indexOf('D'))) - Number(a.timeLeft.substring(1,a.timeLeft.indexOf('D'))); }); break;
+            case 'price': list.sort(function(a,b) { return Number(b.buyItNowPrice.__value__) - Number(a.buyItNowPrice.__value__); }); break;
+            case 'cost': list.sort(function(a,b) { return Number(b.shippingCost.__value__) - Number(a.shippingCost.__value__); }); break;
+        }
+        
+        if (ad == 'ascending') { list.reverse(); }
+        
+        return list;
     }
     
     $scope.loadProducts = function()
     {
+        $scope.animations = false;
+        
         $scope.loading = true;
         $scope.pill = "results";
         $scope.searched = false;
+        $scope.searchModel.page = "results";
         
         $.ajax({
             url: '/json',
@@ -142,8 +169,9 @@ function HW8Controller($scope)
                 $scope.searchModel.numberOfPages = Math.floor((json.length - 1) / 10) + 1;
 
                 $scope.searchModel.selectedItem = -1;
-                $scope.searchModel.page = "results";
                 $scope.searchModel.pageNum = 0;
+                
+                $scope.animations = true;
                 
                 $scope.searched = true;
                 
@@ -179,23 +207,13 @@ function HW8Controller($scope)
                 
                 console.log(json);
                 
-                if($scope.pill=="results") 
-                {
-                    $scope.searchModel.selectedItem = index; 
-                    $scope.searchModel.itemJSON = json; 
-                    $scope.searchModel.page = "item";
-                    $scope.searchModel.itemTab = 0;
-                    $scope.similarItemsShown = 5;
-                    
-                    console.log(json);
-                }
-                else 
-                { 
-                    $scope.wishListModel.selectedItem = index; 
-                    $scope.wishListModel.itemJSON = json;
-                    $scope.wishListModel.page = "item"; 
-                    $scope.wishListModel.itemTab = 0; 
-                }
+                $scope.searchModel.selectedItem = index; 
+                $scope.searchModel.itemJSON = json; 
+                $scope.searchModel.page = "item";
+                $scope.searchModel.itemTab = 0;
+                $scope.similarItemsShown = 5;
+
+                console.log(json);
                 
                 $scope.$apply();
             },
@@ -215,19 +233,12 @@ function HW8Controller($scope)
             contentType: 'application/json',
             data:
             {
-                SearchTerm: item.title[0]
+                SearchTerm: item.title[0].replace(/[^\x00-\x7F]/g, "")
             },
             success: function(json)
             {
-                if($scope.pill=="results")
-                {
-                    $scope.searchModel.photosJSON = json;
-                    console.log(json);
-                }
-                else
-                {
-                    $scope.wishListModel.photosJSON = json;
-                }
+                $scope.searchModel.photosJSON = json;
+                console.log(json);
             },
             error: function()
             {
@@ -247,15 +258,9 @@ function HW8Controller($scope)
             },
             success: function(json)
             {
-                if($scope.pill=="results")
-                {
-                    $scope.searchModel.similarItemsJSON = JSON.parse(json).getSimilarItemsResponse.itemRecommendations;
-                    console.log($scope.searchModel.similarItemsJSON);
-                }
-                else
-                {
-                    $scope.wishListModel.similarItemsJSON = json;
-                }
+                $scope.searchModel.similarItemsJSON = JSON.parse(json).getSimilarItemsResponse.itemRecommendations;
+                
+                console.log($scope.searchModel.similarItemsJSON);
             },
             error: function()
             {
@@ -286,20 +291,29 @@ function HW8Controller($scope)
     {
         if (localStorage.getItem(item.itemId) == null)
         {
-            var value = {data: [item.galleryURL[0], item.title[0], item.sellingStatus[0].currentPrice[0].__value__, item.shippingInfo[0].shippingServiceCost[0].__value__, item.sellerInfo[0].sellerUserName[0]]};
-            
-            localStorage.setItem(item.itemId, JSON.stringify(value));
+            localStorage.setItem(item.itemId, JSON.stringify(item));
             $scope.local = localStorage;
         }
         else
         {
+            if (item.itemId==$scope.searchModel.selectedItemIDWishList)
+            {
+                $scope.searchModel.selectedItemIDWishList = -1;
+            }
+            
             localStorage.removeItem(item.itemId);
             $scope.local = localStorage;
         }
     }
     
     $scope.removeItem = function(key)
-    {
+    {   
+        if ($scope.pill == 'wish-list' && $scope.searchModel.page == "item")
+        {
+            $scope.searchModel.page = 'results';
+            $scope.searchModel.selectedItemIDWishList = -1;
+        }
+        
         localStorage.removeItem(key);
         $scope.local = localStorage;
     }
@@ -311,7 +325,7 @@ function HW8Controller($scope)
         for(const [k,v] of Object.entries($scope.local))
         {
             var json = JSON.parse(v);
-            cost += Number(json.data[2]);
+            cost += Number(json.sellingStatus[0].currentPrice[0].__value__);
         }
         
         return cost.toFixed(2);
@@ -327,10 +341,6 @@ function HW8Controller($scope)
     
     $scope.clearForm = function()
     {
-        //Model variables for keyword and zip fields
-        $scope.kwd = "";
-        $scope.zip = "";
-        
         //Clears the form entirely
         document.getElementById('srch').disabled = true;
         document.getElementById('category').selectedIndex = 0;
@@ -347,7 +357,7 @@ function HW8Controller($scope)
         document.getElementById('here').checked = true;
         document.getElementById('zip').checked = false;
 
-        //user - User Location; other - Other Zip Code
+        //true - User Location; false - Other Zip Code
         $scope.zipMode = true;
 
         //Whether data is currently being fetched
@@ -357,9 +367,6 @@ function HW8Controller($scope)
 
         $scope.pill = "results";
 
-        $scope.emptyKwd = false;
-        $scope.emptyZip = false;
-        
         $scope.searchModel = {
             page: "results",
             selectedItem: -1,
@@ -373,12 +380,18 @@ function HW8Controller($scope)
             similarItemsShown: 5
         }
         
-        //Zip code autocomplete suggestions
-        $scope.suggestedZipCodes = [];
+        //Model variables for keyword and zip fields
+        $scope.kwd = "";
+        $scope.zip = "";
+
+        $scope.emptyKwd = false;
+        $scope.emptyZip = false;
     }
     
     $(document).ready(function() 
     {
+        $("body").tooltip({ selector: '[data-toggle=tooltip]'});
+
         //Fetches zip code of user's location
         var xml = new XMLHttpRequest();
         xml.open("GET", "http://ip-api.com/json", false);

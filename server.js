@@ -3,7 +3,7 @@ const path = require('path');
 const request = require('request');
 
 const app = express();
-const port = 3000;
+const port = 8080;
 
 const APP_ID = "MatthewJ-CS571-PRD-2f2cd4cf7-09303b6c";
 
@@ -129,6 +129,8 @@ function getAutoComplete(req, res)
 {
     var GET = req.query;
     var zip = GET.Zip;
+    
+    console.log("zip: " + zip);
     
     var API_URL = "http://api.geonames.org/postalCodeSearchJSON?postalcode_startsWith=" + zip + "&username=" + GeonamesUsername + "&country=US&maxRows=5";
     

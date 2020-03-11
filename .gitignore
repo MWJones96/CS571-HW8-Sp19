@@ -1,0 +1,4 @@
+node_modules/
+copy/
+copy.7z
+package-lock.json
